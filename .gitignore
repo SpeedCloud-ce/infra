@@ -141,3 +141,22 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# --- SpeedCloud infra ---
+# Real env files — never commit. .env.example IS tracked (no secrets).
+.env
+.env.*
+!.env.example
+
+# Caddy state when running locally
+caddy/data/
+caddy/config/
+
+# Local docker volumes mounted into the repo (if any)
+volumes/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
