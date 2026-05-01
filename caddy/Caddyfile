@@ -1,0 +1,33 @@
+{
+	# Global options. Email is used by ACME for cert notifications;
+	# override at deploy time via the CADDY_ACME_EMAIL env var.
+	email {$CADDY_ACME_EMAIL:devops@speedcloud.example}
+}
+
+{$N8N_DOMAIN} {
+	encode gzip zstd
+
+	header {
+		# HSTS: only send after HTTPS is confirmed working in prod.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Hide upstream/proxy fingerprint.
+		-Server
+		-X-Powered-By
+	}
+
+	# n8n upstream resolves on the shared docker network.
+	# Override host via N8N_UPSTREAM at deploy time if needed.
+	# X-Forwarded-{For,Proto,Host} are set automatically by reverse_proxy.
+	reverse_proxy {$N8N_UPSTREAM:n8n:5678} {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

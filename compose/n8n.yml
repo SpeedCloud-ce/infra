@@ -1,0 +1,43 @@
+# SpeedCloud n8n stack — single-service compose for development and as a
+# building block for the 1-clique image. No Caddy here on purpose: the
+# reverse proxy is provisioned separately and joins the same external
+# network in deployment scenarios.
+#
+# Usage:
+#   cp .env.example .env   # fill in real values
+#   docker compose -f compose/n8n.yml up -d
+#   docker compose -f compose/n8n.yml ps      # n8n should report (healthy)
+#   docker compose -f compose/n8n.yml down -v # clean teardown
+
+name: speedcloud-n8n
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:1.74.1
+    container_name: speedcloud-n8n
+    restart: unless-stopped
+    env_file:
+      - ../.env.example
+    ports:
+      # Exposed only on loopback by default — production uses Caddy on the same
+      # docker network and should remove this `ports` section.
+      - "127.0.0.1:5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - n8n_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:5678/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+volumes:
+  n8n_data:
+    name: speedcloud_n8n_data
+
+networks:
+  n8n_net:
+    name: speedcloud_n8n_net
+    driver: bridge
